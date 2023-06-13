@@ -1,5 +1,10 @@
+#!/usr/bin/env python
+
 from urllib.request import urlopen, Request
 from urllib.parse import quote as urlencode
+from os.path import exists as file_exists
+from os import makedirs
+
 from bs4 import BeautifulSoup
 import sys
 
@@ -8,6 +13,7 @@ import sys
 #scl -> showing search for
 
 google_search_url = "https://google.com/search?q="
+tmp_storage = "/tmp/omnicient/"
 hdr = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)' }
 
 colors = ["\x1b[0m", "\x1b[4m", "\x1b[2m"]
@@ -15,13 +21,17 @@ class_names = ["AVsepf", "Ap5OSd"]
 
 def search(query):
     soup = BeautifulSoup(fetch_html(query), "html.parser")
+    show_wesbite_brefs = True
 
     show_search(soup)
     if (find_class(soup, "iBp4i")): return
+    if (check_for_translation(soup)): return
+    if (check_for_cast(soup, 10)): show_website_brefs = False
     if (show_descripton(soup)): return
     for name in class_names:
         if (find_class(soup, name)): return
-    show_website_brefs(soup, 2)
+    if (show_website_brefs):
+        show_website_brefs(soup, 2)
 
 def show_descripton(soup):
     # heading
@@ -36,6 +46,37 @@ def show_descripton(soup):
             found = True
             print_ele(match)
     return found
+
+def check_for_cast(soup, count):
+    cast = soup.find("div", class_="idg8be")
+    if (not cast): return False
+    printed = False
+    for person in cast.find_all("a", class_="BVG0Nb"):
+        name=person.find("div", class_="s3v9rd")
+        if (not name): continue
+
+        print_ele(name, -1)
+        printed = True
+        movie_name = person.find("div", class_="tAd8D")
+        if (movie_name):
+            print(format_color(" as ", 2), end="")
+            print_ele(movie_name)
+        else: print("")
+
+        count -= 1
+        if (not count):
+            print(format_color("etc...", 2))
+            break
+    if (printed): print("")
+    return printed
+
+def check_for_translation(soup):
+    tranlation = soup.find(id="lrtl-translation-text")
+    if (tranlation): print_ele(tranlation)
+    else: return False
+    in_english = soup.find(id="lrtl-transliteration-text")
+    if (in_english): print_ele(in_english)
+    return True;
 
 def find_class(soup, class_name):
     found = False
@@ -71,13 +112,23 @@ def show_website_brefs(soup, count):
         else: return
 
 def fetch_html(query):
+    query = urlencode(query)
+
+    # look for cache
+    tmp_path = tmp_storage + query.lower()
+    if (file_exists(tmp_storage)):
+        if (file_exists(tmp_path)):
+            with open(tmp_path, "r") as file:
+                return file.read()
+    else: makedirs(tmp_storage)
+
     html_data = ""
-    url = google_search_url + urlencode(query)
+    url = google_search_url + query
     request = Request(url, headers=hdr)
     try:
         with urlopen(request) as response:
             html_data = response.read().decode("utf8")
-            with open("test.html", "w") as file:
+            with open(tmp_path, "w") as file:
                 file.write(html_data)
         return html_data
     except Exception as err:
@@ -92,12 +143,14 @@ def format_color(text, code):
 def print_ele(ele, code=0, prefix=False):
     if (not ele): return False
     if (prefix): print(format_color(prefix, code), end="")
-    print(format_color(ele.text, code))
+    if (code == -1): print(format_color(ele.text, 0), end="")
+    else: print(format_color(ele.text, code))
     return True
 
 def init():
     if (len(sys.argv) == 1):
-        print("What do you need to know?")
-    for query in sys.argv[1:]:
-        search(query)
-init()
+        print("Ask what you want to know!")
+        return
+    search(" ".join(sys.argv[1:]))
+
+search("date")
