@@ -8,34 +8,36 @@ from os import makedirs
 from bs4 import BeautifulSoup
 import sys
 
-# iBp4i -> short answers
-# AVsepf -> details
-#scl -> showing search for
-
 google_search_url = "https://google.com/search?q="
 tmp_storage = "/tmp/omnicient/"
 hdr = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)' }
 
 # settings
+options = {
+    "use_cache": True,
+    "show_search_query": True,
+    "show_website_brefs": True,
+    "only_cast": False
+}
 
-use_cache = True
-
-colors = ["\x1b[0m", "\x1b[4m", "\x1b[2m"]
+colors = ["\x1b[0m", "\x1b[4m", "\x1b[2m", "\x1b[31m"]
 class_names = ["AVsepf", "Ap5OSd"]
 
 def search(query):
     soup = BeautifulSoup(fetch_html(query), "html.parser")
-    show_website_brefs = True
 
-    show_search(soup)
+    if (options["show_search_query"]):
+        print_search_query(soup)
+    if (options["only_cast"]): return check_for_cast(soup, 10)
+
     if (find_class(soup, "iBp4i")): return
     if (check_for_translation(soup)): return
-    if (check_for_cast(soup, 10)): show_website_brefs = False
+    if (check_for_cast(soup, 10)): options["show_website_brefs"] = False
     if (show_descripton(soup)): return
 
     for name in class_names:
         if (find_class(soup, name)): return
-    if (show_website_brefs):
+    if (options["show_website_brefs"]):
         website_brefs(soup, 2)
 
 def show_descripton(soup):
@@ -69,10 +71,10 @@ def check_for_cast(soup, count):
         else: print("")
 
         count -= 1
-        if (not count):
+        if (not count and not options["only_cast"]):
             print(format_color("etc...", 2))
             break
-    if (printed): print("")
+    if (printed and not options["only_cast"]): print("")
     return printed
 
 def check_for_translation(soup):
@@ -91,7 +93,7 @@ def find_class(soup, class_name):
         found = True
     return found
 
-def show_search(soup):
+def print_search_query(soup):
     search = soup.find(id="scl")
     if (not search): return
     print_ele(search, 2, "showing results for ")
@@ -121,7 +123,7 @@ def fetch_html(query):
 
     # look for cache
     tmp_path = tmp_storage + query.lower()
-    if (use_cache):
+    if (options["use_cache"]):
         if (file_exists(tmp_storage)):
             if (file_exists(tmp_path)):
                 with open(tmp_path, "r") as file:
@@ -153,37 +155,45 @@ def print_ele(ele, code=0, prefix=False):
     else: print(format_color(ele.text, code))
     return True
 
+def error(msg):
+    print(format_color("[ERROR] ", 3) + msg)
+    exit(1)
+
 def show_help_message():
+    print("One who has answers to all your questions.")
+    print("(provided they are available on google.com)\n")
     options = [
             "r", "not to use cache",
+            "q", "not to show search query",
+            "b", "not to show website brefs",
+            "c", "show only and all cast info",
             "h", "show this message"
         ]
     i = 0
     while(i != len(options)):
-        print("\t-" + options[i] + " : " + options[i+1])
+        print(f"\t-{options[i]}: {options[i+1]}")
         i += 2
-    print("omnicient [OPTIONS] [QUERY]")
+    print("\nomnicient [OPTIONS] [QUERY]")
     exit(1)
 
 def init():
-    global use_cache
+    global options
     query = []
     for arg in sys.argv:
         if (arg[0] == '-'):
-            if (len(arg) == 1):
-                print("invalid option")
-                exit(1)
+            if (len(arg) == 1): error("invalid option")
             match arg[1]:
-                case 'r':
-                    use_cache = False
-                case 'h':
-                    show_help_message()
-                case _:
-                    print("unknown option " + arg[1])
-                    exit(1)
+                case 'r': options["use_cache"] = False
+                case 'h': show_help_message()
+                case 'q': options["show_search_query"] = False
+                case 'c': options["only_cast"] = True
+                case 'b': options["show_website_brefs"] = False
+                case _: error("unknown option " + arg[1])
         else: query.append(arg)
+
     if (len(query) == 1):
         print("Ask what you need to know")
         show_help_message()
     search(" ".join(query[1:]))
+
 init()
