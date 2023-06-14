@@ -1,10 +1,10 @@
 TODO
 ----
 [ ] lyrics support
-[ ] options
 
 DONE
 ----
 [x] movie cast
+[x] options
 [x] translation support
 [x] html caching

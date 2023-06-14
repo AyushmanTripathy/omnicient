@@ -16,22 +16,27 @@ google_search_url = "https://google.com/search?q="
 tmp_storage = "/tmp/omnicient/"
 hdr = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)' }
 
+# settings
+
+use_cache = True
+
 colors = ["\x1b[0m", "\x1b[4m", "\x1b[2m"]
 class_names = ["AVsepf", "Ap5OSd"]
 
 def search(query):
     soup = BeautifulSoup(fetch_html(query), "html.parser")
-    show_wesbite_brefs = True
+    show_website_brefs = True
 
     show_search(soup)
     if (find_class(soup, "iBp4i")): return
     if (check_for_translation(soup)): return
     if (check_for_cast(soup, 10)): show_website_brefs = False
     if (show_descripton(soup)): return
+
     for name in class_names:
         if (find_class(soup, name)): return
     if (show_website_brefs):
-        show_website_brefs(soup, 2)
+        website_brefs(soup, 2)
 
 def show_descripton(soup):
     # heading
@@ -92,7 +97,7 @@ def show_search(soup):
     print_ele(search, 2, "showing results for ")
     print("")
 
-def show_website_brefs(soup, count): 
+def website_brefs(soup, count): 
     for ele in soup.find_all("div", class_="fP1Qef"):
         printed = False
         print_ele(ele.find("div", "sCuL3"), 2, "from: ")
@@ -116,11 +121,12 @@ def fetch_html(query):
 
     # look for cache
     tmp_path = tmp_storage + query.lower()
-    if (file_exists(tmp_storage)):
-        if (file_exists(tmp_path)):
-            with open(tmp_path, "r") as file:
-                return file.read()
-    else: makedirs(tmp_storage)
+    if (use_cache):
+        if (file_exists(tmp_storage)):
+            if (file_exists(tmp_path)):
+                with open(tmp_path, "r") as file:
+                    return file.read()
+        else: makedirs(tmp_storage)
 
     html_data = ""
     url = google_search_url + query
@@ -147,10 +153,37 @@ def print_ele(ele, code=0, prefix=False):
     else: print(format_color(ele.text, code))
     return True
 
-def init():
-    if (len(sys.argv) == 1):
-        print("Ask what you want to know!")
-        return
-    search(" ".join(sys.argv[1:]))
+def show_help_message():
+    options = [
+            "r", "not to use cache",
+            "h", "show this message"
+        ]
+    i = 0
+    while(i != len(options)):
+        print("\t-" + options[i] + " : " + options[i+1])
+        i += 2
+    print("omnicient [OPTIONS] [QUERY]")
+    exit(1)
 
-search("date")
+def init():
+    global use_cache
+    query = []
+    for arg in sys.argv:
+        if (arg[0] == '-'):
+            if (len(arg) == 1):
+                print("invalid option")
+                exit(1)
+            match arg[1]:
+                case 'r':
+                    use_cache = False
+                case 'h':
+                    show_help_message()
+                case _:
+                    print("unknown option " + arg[1])
+                    exit(1)
+        else: query.append(arg)
+    if (len(query) == 1):
+        print("Ask what you need to know")
+        show_help_message()
+    search(" ".join(query[1:]))
+init()
