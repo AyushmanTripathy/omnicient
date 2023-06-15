@@ -17,7 +17,8 @@ options = {
     "use_cache": True,
     "show_search_query": True,
     "show_website_brefs": True,
-    "only_cast": False
+    "show_lists_info": False,
+    "show_debug_info": True
 }
 
 colors = ["\x1b[0m", "\x1b[4m", "\x1b[2m", "\x1b[31m"]
@@ -28,12 +29,13 @@ def search(query):
 
     if (options["show_search_query"]):
         print_search_query(soup)
-    if (options["only_cast"]): return check_for_cast(soup, 10)
+    if (options["show_lists_info"]):
+        return check_for_list(soup, 10)
 
     if (find_class(soup, "iBp4i")): return
     if (check_for_translation(soup)): return
-    if (check_for_cast(soup, 10)): options["show_website_brefs"] = False
     if (show_descripton(soup)): return
+    if (check_for_list(soup, 10)): options["show_website_brefs"] = False
 
     for name in class_names:
         if (find_class(soup, name)): return
@@ -54,27 +56,27 @@ def show_descripton(soup):
             print_ele(match)
     return found
 
-def check_for_cast(soup, count):
+def check_for_list(soup, count):
     cast = soup.find("div", class_="idg8be")
     if (not cast): return False
     printed = False
     for person in cast.find_all("a", class_="BVG0Nb"):
-        name=person.find("div", class_="s3v9rd")
+        name = person.find("div", class_="s3v9rd")
         if (not name): continue
 
         print_ele(name, -1)
         printed = True
         movie_name = person.find("div", class_="tAd8D")
         if (movie_name):
-            print(format_color(" as ", 2), end="")
+            print(format_color(" <=> ", 2), end="")
             print_ele(movie_name)
         else: print("")
 
         count -= 1
-        if (not count and not options["only_cast"]):
+        if (not count and not options["show_lists_info"]):
             print(format_color("etc...", 2))
             break
-    if (printed and not options["only_cast"]): print("")
+    if (printed and not options["show_lists_info"]): print("")
     return printed
 
 def check_for_translation(soup):
@@ -122,7 +124,7 @@ def fetch_html(query):
     query = urlencode(query)
 
     # look for cache
-    tmp_path = tmp_storage + query.lower()
+    tmp_path = tmp_storage + query.lower() + ".html"
     if (options["use_cache"]):
         if (file_exists(tmp_storage)):
             if (file_exists(tmp_path)):
@@ -136,13 +138,12 @@ def fetch_html(query):
     try:
         with urlopen(request) as response:
             html_data = response.read().decode("utf8")
-            with open(tmp_path, "w") as file:
+            with open("test.html", "w") as file:
                 file.write(html_data)
         return html_data
     except Exception as err:
-        print("Error while fetching google.com")
         print(err)
-        exit(1)
+        error("Failed to fetch")
 
 def format_color(text, code):
     if (code == 0): return text
@@ -166,14 +167,14 @@ def show_help_message():
             "r", "not to use cache",
             "q", "not to show search query",
             "b", "not to show website brefs",
-            "c", "show only and all cast info",
+            "l", "show list info",
             "h", "show this message"
         ]
     i = 0
     while(i != len(options)):
         print(f"\t-{options[i]}: {options[i+1]}")
         i += 2
-    print("\nomnicient [OPTIONS] [QUERY]")
+    print("\nUsage: omnicient [OPTIONS] [QUERY]")
     exit(1)
 
 def init():
@@ -182,11 +183,11 @@ def init():
     for arg in sys.argv:
         if (arg[0] == '-'):
             if (len(arg) == 1): error("invalid option")
-            match arg[1]:
+            match arg[1:]:
                 case 'r': options["use_cache"] = False
                 case 'h': show_help_message()
                 case 'q': options["show_search_query"] = False
-                case 'c': options["only_cast"] = True
+                case 'l': options["show_lists_info"] = True
                 case 'b': options["show_website_brefs"] = False
                 case _: error("unknown option " + arg[1])
         else: query.append(arg)

@@ -1,6 +1,10 @@
 TODO
 ----
+[ ] lists (ed sheeran songs)
+[ ] list shwoing news 
 [ ] lyrics support
+
+reverse write to test.html
 
 DONE
 ----
