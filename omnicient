@@ -10,7 +10,7 @@ import sys
 
 google_search_url = "https://google.com/search?q="
 tmp_storage = "/tmp/omnicient/"
-hdr = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 6.1; Win64; x64)' }
+hdr = { 'User-Agent' : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:53.0) Gecko/20100101 Firefox/53.0' }
 
 # settings
 options = {
@@ -18,11 +18,15 @@ options = {
     "show_search_query": True,
     "show_website_brefs": True,
     "show_lists_info": False,
-    "show_debug_info": True
+    "show_debug_info": False
 }
 
 colors = ["\x1b[0m", "\x1b[4m", "\x1b[2m", "\x1b[31m"]
 class_names = ["AVsepf", "Ap5OSd"]
+
+def debug(s):
+    if (options["show_debug_info"]):
+        print(format_color("[DEBUG] " + s, 2))
 
 def search(query):
     soup = BeautifulSoup(fetch_html(query), "html.parser")
@@ -43,6 +47,8 @@ def search(query):
         website_brefs(soup, 2)
 
 def show_descripton(soup):
+    debug("finding description")
+
     # heading
     heading = soup.select(".zBAuLc .deIvCb");
     if (heading and len(heading) == 1):
@@ -57,6 +63,8 @@ def show_descripton(soup):
     return found
 
 def check_for_list(soup, count):
+    debug("checking for lists")
+
     cast = soup.find("div", class_="idg8be")
     if (not cast): return False
     printed = False
@@ -80,6 +88,7 @@ def check_for_list(soup, count):
     return printed
 
 def check_for_translation(soup):
+    debug("searching for translations")
     tranlation = soup.find(id="lrtl-translation-text")
     if (tranlation): print_ele(tranlation)
     else: return False
@@ -90,6 +99,7 @@ def check_for_translation(soup):
 def find_class(soup, class_name):
     found = False
     for match in soup.find_all("div", class_=class_name):
+        debug("found " + class_name)
         print_ele(match)
         if (class_name == "iBp4i"): return True
         found = True
@@ -102,6 +112,7 @@ def print_search_query(soup):
     print("")
 
 def website_brefs(soup, count): 
+    debug("finding website brefs")
     for ele in soup.find_all("div", class_="fP1Qef"):
         printed = False
         print_ele(ele.find("div", "sCuL3"), 2, "from: ")
@@ -138,12 +149,33 @@ def fetch_html(query):
     try:
         with urlopen(request) as response:
             html_data = response.read().decode("utf8")
-            with open("test.html", "w") as file:
+            with open(tmp_path, "w") as file:
                 file.write(html_data)
         return html_data
     except Exception as err:
         print(err)
         error("Failed to fetch")
+
+def init():
+    global options
+    query = []
+    for arg in sys.argv:
+        if (arg[0] == '-'):
+            if (len(arg) == 1): error("invalid option")
+            match arg[1:]:
+                case 'r': options["use_cache"] = False
+                case 'h': show_help_message()
+                case 'q': options["show_search_query"] = False
+                case 'l': options["show_lists_info"] = True
+                case 'b': options["show_website_brefs"] = False
+                case 'd': options["show_debug_info"] = True
+                case _: error("unknown option " + arg[1])
+        else: query.append(arg)
+
+    if (len(query) == 1):
+        print("Ask what you need to know")
+        show_help_message()
+    search(" ".join(query[1:]))
 
 def format_color(text, code):
     if (code == 0): return text
@@ -168,6 +200,7 @@ def show_help_message():
             "q", "not to show search query",
             "b", "not to show website brefs",
             "l", "show list info",
+            "d", "show debug info",
             "h", "show this message"
         ]
     i = 0
@@ -176,25 +209,5 @@ def show_help_message():
         i += 2
     print("\nUsage: omnicient [OPTIONS] [QUERY]")
     exit(1)
-
-def init():
-    global options
-    query = []
-    for arg in sys.argv:
-        if (arg[0] == '-'):
-            if (len(arg) == 1): error("invalid option")
-            match arg[1:]:
-                case 'r': options["use_cache"] = False
-                case 'h': show_help_message()
-                case 'q': options["show_search_query"] = False
-                case 'l': options["show_lists_info"] = True
-                case 'b': options["show_website_brefs"] = False
-                case _: error("unknown option " + arg[1])
-        else: query.append(arg)
-
-    if (len(query) == 1):
-        print("Ask what you need to know")
-        show_help_message()
-    search(" ".join(query[1:]))
 
 init()

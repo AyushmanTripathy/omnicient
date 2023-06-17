@@ -4,6 +4,8 @@ TODO
 [ ] list shwoing news 
 [ ] lyrics support
 
+[ ] windows support
+
 reverse write to test.html
 
 DONE
