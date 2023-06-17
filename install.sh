@@ -23,6 +23,15 @@ else
   show_info "found pip"
 fi
 
+# installing deps
+python -m pip install beautifulsoup4
+if [ $? -eq 0 ]
+then
+  show_info "installation complete BeautifulSoup"
+else
+  show_error "installation failed for BeautifulSoup"
+fi
+
 # ask for install location
 locations=("/usr/local/bin" "$HOME/.local/bin")
 index=0
