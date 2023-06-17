@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # this script is for installing omnicient
 # https://github.com/AyushmanTripathy/omnicient
 
@@ -11,26 +13,32 @@ show_info() {
 
 show_error() {
   printf "$RED[ERROR]$NC $1\n"
-  exit
 }
 
-# check for pip
-python -m pip -h >> /dev/null
-if [ $? -ne 0 ]
-then
-  show_error "pip not found"
-else
-  show_info "found pip"
-fi
+check_for_pip() {
+  show_info "using $1"
+  # check for pip
+  $1 -m pip -h >> /dev/null
+  if [ $? -ne 0 ]
+  then
+    show_error "pip not found"
+    check_for_pip "python3"
+  else
+    show_info "found pip"
+  fi
 
-# installing deps
-python -m pip install beautifulsoup4
-if [ $? -eq 0 ]
-then
-  show_info "installation complete BeautifulSoup"
-else
-  show_error "installation failed for BeautifulSoup"
-fi
+  # installing deps
+  $1 -m pip install beautifulsoup4
+  if [ $? -eq 0 ]
+  then
+    show_info "installation complete beautifulsoup4"
+  else
+    show_error "installation failed for beautifulsoup4"
+    check_for_pip "python3"
+  fi
+}
+
+check_for_pip "python"
 
 # ask for install location
 locations=("/usr/local/bin" "$HOME/.local/bin")
@@ -48,7 +56,7 @@ read index
 index=$((index - 1))
 if [ -z "${locations[$index]}" ]
 then
-  show_error "invalid index"
+  show_error "invalid index" && exit
 fi
 location="${locations[$index]}/omnicient"
 
@@ -57,7 +65,7 @@ show_info "using $location"
 cp "omnicient" $location
 if [ $? -ne 0 ]
 then
-  show_error "copying failed!"
+  show_error "copying failed!" && exit
 fi
 chmod +x $location
 
