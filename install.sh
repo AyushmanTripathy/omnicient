@@ -7,6 +7,8 @@ RED='\033[0;31m'
 GREEN='\033[0;32m'
 NC='\033[0m'
 
+python_version="python3"
+
 show_info() {
   printf "$GREEN[INFO]$NC $1\n"
 }
@@ -16,13 +18,15 @@ show_error() {
 }
 
 check_for_pip() {
+  python_version="$1"
   show_info "using $1"
   # check for pip
   $1 -m pip -h >> /dev/null
   if [ $? -ne 0 ]
   then
     show_error "pip not found"
-    check_for_pip "python3"
+    check_for_pip "python"
+    return
   else
     show_info "found pip"
   fi
@@ -34,35 +38,19 @@ check_for_pip() {
     show_info "installation complete beautifulsoup4"
   else
     show_error "installation failed for beautifulsoup4"
-    check_for_pip "python3"
+    check_for_pip "python"
+    return
   fi
 }
 
-check_for_pip "python"
-
-# ask for install location
-locations=("/usr/local/bin" "$HOME/.local/bin")
-index=0
-echo "select installation location"
-for i in "${locations[@]}"
-do
-  index=$((index + 1))
-  echo "$index: $i"
-done
-printf "select index> "
-read index
-
-# check input
-index=$((index - 1))
-if [ -z "${locations[$index]}" ]
-then
-  show_error "invalid index" && exit
-fi
-location="${locations[$index]}/omnicient"
+check_for_pip "$python_version"
 
 # copy files
+location="$HOME/.local/bin/omnicient"
 show_info "using $location"
-cp "omnicient" $location
+echo "#!/usr/bin/env $python_version" > $location
+cat "omnicient.py" >> $location
+
 if [ $? -ne 0 ]
 then
   show_error "copying failed!" && exit

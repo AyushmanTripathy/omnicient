@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 from urllib.request import urlopen, Request
 from urllib.parse import quote as urlencode
 from os.path import exists as file_exists
@@ -157,24 +155,26 @@ def fetch_html(query):
         error("Failed to fetch")
 
 def init():
+    debug("started omnicient")
     global options
     query = []
     for arg in sys.argv:
         if (arg[0] == '-'):
             if (len(arg) == 1): error("invalid option")
-            match arg[1:]:
-                case 'r': options["use_cache"] = False
-                case 'h': show_help_message()
-                case 'q': options["show_search_query"] = False
-                case 'l': options["show_lists_info"] = True
-                case 'b': options["show_website_brefs"] = False
-                case 'd': options["show_debug_info"] = True
-                case _: error("unknown option " + arg[1])
+            char = arg[1]
+            if (char == 'r'): options["use_cache"] = False
+            elif (char == 'h'): show_help_message()
+            elif (char == 'q'): options["show_search_query"] = False
+            elif (char == 'l'): options["show_lists_info"] = True
+            elif (char == 'b'): options["show_website_brefs"] = False
+            elif (char == 'd'): options["show_debug_info"] = True
+            else: error("unknown option " + arg[1])
         else: query.append(arg)
 
     if (len(query) == 1):
         print("Ask what you need to know")
         show_help_message()
+    debug(" ".join(query[1:]))
     search(" ".join(query[1:]))
 
 def format_color(text, code):
