@@ -43,24 +43,13 @@ then
 fi
 location="${locations[$index]}/omnicient"
 
-# creating clone directory
+# copy files
 show_info "using $location"
-show_info "cloning repo"
-clone_location="/tmp/omnicient-repo/"
-mkdir -p $clone_location
-cd $clone_location
-
-# clone repo
-show_info "cloning into $clone_location"
-git clone "https://github.com/AyushmanTripathy/omnicient" --depth 1
+cp "omnicient" $location
 if [ $? -ne 0 ]
 then
-  show_error "failed to clone repo"
+  show_error "copying failed!"
 fi
-
-# copy files
-cp "$clone_location/omnicient/omnicient" $location
-rm -rf $clone_location
 chmod +x $location
 
 # complete
