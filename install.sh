@@ -45,8 +45,20 @@ check_for_pip() {
 
 check_for_pip "$python_version"
 
+# install location
+show_info "enter install location"
+printf "$HOME/"
+read location
+if [ -z "$location" ]
+then
+  location="$HOME/.local/bin"
+  show_info "using default location"
+else
+  location="$HOME/$location"
+fi
+location="$location/omnicient"
+
 # copy files
-location="$HOME/.local/bin/omnicient"
 show_info "using $location"
 echo "#!/usr/bin/env $python_version" > $location
 cat "omnicient.py" >> $location
