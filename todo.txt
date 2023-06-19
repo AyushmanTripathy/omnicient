@@ -6,8 +6,6 @@ TODO
 
 [ ] windows support
 
-reverse write to test.html
-
 DONE
 ----
 [x] movie cast
