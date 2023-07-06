@@ -25,8 +25,7 @@ check_for_pip() {
   if [ $? -ne 0 ]
   then
     show_error "pip not found"
-    check_for_pip "python"
-    return
+    exit
   else
     show_info "found pip"
   fi
@@ -38,8 +37,7 @@ check_for_pip() {
     show_info "installation complete beautifulsoup4"
   else
     show_error "installation failed for beautifulsoup4"
-    check_for_pip "python"
-    return
+    exit 
   fi
 }
 
