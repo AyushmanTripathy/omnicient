@@ -2,7 +2,10 @@
 
 # Omnicient
 
-One who has answers to all your questions. (provided they are available on google.com)
+One who has answers to all your questions. (provided they are available on google.com)  
+
+It is a web scraper for google.com in python with beautifulsoup.
+This project is inspired from [tuxi](https://github.com/bugswriter/tuxi) project.
 
 ## Installation
 
